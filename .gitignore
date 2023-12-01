@@ -1,0 +1,21 @@
+*.csproj
+*.vsconfig
+*.sln
+*.apk
+*.notgz
+*notgz.meta
+
+Logs/
+obj/
+Library/
+UserSettings/
+.vs/
+Temp/
+Builds/
+Recordings/
+.idea
+MemoryCaptures
+ProjectSettings/GvhProjectSettings.xml
+Assets/Firebase/Plugins/x86_64/
+Assets/Plugins/iOS/Firebase/
+Assets/GUI PRO Kit - Fantasy RPG/PSD/
