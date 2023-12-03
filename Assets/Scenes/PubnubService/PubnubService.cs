@@ -60,26 +60,32 @@ public class PubnubService
         pnSubscribeCallbackListener.onMessageAction += OnPnMessageAction;*/
     }
 
-    public void Subscribe(string channel)
+    public void Subscribe(List<string> channels)
     {
         _pubnub.Subscribe<string>()
-            .Channels(new List<string> { channel })
+            .Channels(channels)
             .Execute();
     }
 
-    public void Unsubscribe(string channel)
+    public void Unsubscribe(List<string> channels)
     {
         _pubnub.Unsubscribe<string>()
-            .Channels(new List<string> { channel })
+            .Channels(channels)
             .Execute();
     }
 
-    public void Publish(string channel, string message, PNCallback<PNPublishResult> callback)
+    public void Publish(string channel, string message, PNCallback<PNPublishResult> callback = null)
     {
-        _pubnub.Publish()
-            .Channel(channel)
-            .Message(message)
-            .Execute(callback);
+        if (callback == null)
+            _pubnub.Publish()
+                .Channel(channel)
+                .Message(message)
+                .ExecuteAsync();
+        else
+            _pubnub.Publish()
+                .Channel(channel)
+                .Message(message)
+                .Execute(callback);
     }
 
     //send signal
@@ -90,7 +96,7 @@ public class PubnubService
             .Message(message)
             .Execute(callback);
     }
-    
+
     public void FetchHistory(string chatChannel, int i, PNCallback<PNFetchHistoryResult> callback)
     {
         _pubnub.FetchHistory().Channels(new List<string> { chatChannel }).MaximumPerChannel(i).Execute(callback);

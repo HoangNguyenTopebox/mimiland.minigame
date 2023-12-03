@@ -1,24 +1,34 @@
 using System;
+using System.Collections.Generic;
 using PubnubApi;
 using UnityEngine;
 
 public class PubnubBehavior : MonoBehaviour
 {
-    private string _channelName = "w-1";
+    private string _worldChannel = "w-1";
     private string _chatChannel = "g-1";
+    private List<string> Channels
+    {
+        get => new List<string>
+        {
+            _worldChannel,
+            _chatChannel,
+        };
+    }
 
     private void Awake()
     {
         DontDestroyOnLoad(gameObject);
 
-        PubnubService.Instance.Subscribe(_channelName);
+        PubnubService.Instance.Subscribe(Channels);
         PubnubService.Instance.AddReceivedSignal(OnReceivedSignal);
     }
+
 
     [ContextMenu("Send Publish")]
     public void SendPublish()
     {
-        PubnubService.Instance.Publish(_chatChannel, SignalTypeToString(PNSignalType.SendJoinWorld),
+        PubnubService.Instance.Publish(_chatChannel, "Hello World",
             new PNPublishResultExt(OnPublish));
     }
 
@@ -30,13 +40,26 @@ public class PubnubBehavior : MonoBehaviour
 
     private void OnFetchHistory(PNFetchHistoryResult fetchHistoryResult, PNStatus status)
     {
-        Debug.Log($"[PUBNUB] OnFetchHistory: {fetchHistoryResult}");
+        if (status.Error)
+        {
+            Debug.LogError($"[PUBNUB] OnFetchHistory: {status.ErrorData.Information}");
+        }
+        else
+        {
+            foreach (var messages in fetchHistoryResult.Messages)
+            {
+                foreach (var message in messages.Value)
+                {
+                    Debug.Log($"[PUBNUB] OnFetchHistory: {message.Entry} - {message.Timetoken} - {message.Meta} - {message.Uuid}");
+                }
+            }
+        }
     }
 
     [ContextMenu("Send Signal")]
     public void SendSignal()
     {
-        PubnubService.Instance.SendSignal(_channelName, SignalTypeToString(PNSignalType.SendJoinWorld),
+        PubnubService.Instance.SendSignal(_worldChannel, SignalTypeToString(PNSignalType.SendJoinWorld),
             new PNPublishResultExt(OnSignal));
     }
 
@@ -84,7 +107,7 @@ public class PubnubBehavior : MonoBehaviour
 
     private void OnDestroy()
     {
-        PubnubService.Instance.Unsubscribe(_channelName);
+        PubnubService.Instance.Unsubscribe(Channels);
         PubnubService.Instance.ClearAll();
     }
 }
