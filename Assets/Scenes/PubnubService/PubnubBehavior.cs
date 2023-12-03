@@ -7,6 +7,7 @@ public class PubnubBehavior : MonoBehaviour
 {
     private string _worldChannel = "w-1";
     private string _chatChannel = "g-1";
+
     private List<string> Channels
     {
         get => new List<string>
@@ -21,7 +22,8 @@ public class PubnubBehavior : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         PubnubService.Instance.Subscribe(Channels);
-        PubnubService.Instance.AddReceivedSignal(OnReceivedSignal);
+        PubnubService.Instance.OnSignalCallback += OnReceivedSignal;
+        PubnubService.Instance.OnStatusCallback += OnStatusCallback;
     }
 
 
@@ -50,7 +52,8 @@ public class PubnubBehavior : MonoBehaviour
             {
                 foreach (var message in messages.Value)
                 {
-                    Debug.Log($"[PUBNUB] OnFetchHistory: {message.Entry} - {message.Timetoken} - {message.Meta} - {message.Uuid}");
+                    Debug.Log(
+                        $"[PUBNUB] OnFetchHistory: {message.Entry} - {message.Timetoken} - {message.Meta} - {message.Uuid}");
                 }
             }
         }
@@ -94,6 +97,18 @@ public class PubnubBehavior : MonoBehaviour
         }
     }
 
+    private void OnStatusCallback(PNStatusCategory status)
+    {
+        if (status == PNStatusCategory.PNConnectedCategory)
+        {
+            Debug.Log($"[PUBNUB] OnStatusCallback: {status}");
+        }
+        else if (status == PNStatusCategory.PNDisconnectedCategory)
+        {
+            Debug.Log($"[PUBNUB] OnStatusCallback: {status}");
+        }
+    }
+
     private string SignalTypeToString(PNSignalType type)
     {
         switch (type)
@@ -108,6 +123,10 @@ public class PubnubBehavior : MonoBehaviour
     private void OnDestroy()
     {
         PubnubService.Instance.Unsubscribe(Channels);
+    }
+
+    private void OnApplicationQuit()
+    {
         PubnubService.Instance.ClearAll();
     }
 }

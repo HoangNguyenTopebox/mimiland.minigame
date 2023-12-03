@@ -18,7 +18,8 @@ public class PubnubService
         Initialize();
     }
 
-    private event Action<PNSignalResult<object>> OnSignalCallback;
+    public event Action<PNSignalResult<object>> OnSignalCallback;
+    public event Action<PNStatusCategory> OnStatusCallback;
 
     private Pubnub _pubnub;
     private PNConfiguration _pnConfiguration;
@@ -37,7 +38,8 @@ public class PubnubService
         }
 
         _isInitialized = true;
-        _pnConfiguration = new PNConfiguration(new UserId("pub-c-9b0b9c7c-9c7a-4b7a-9e1a-2b9b8b0b0b0b"))
+
+        _pnConfiguration = new PNConfiguration(new UserId(GetUuid()))
         {
             PublishKey = PublishKey,
             SubscribeKey = SubscribeKey,
@@ -53,11 +55,11 @@ public class PubnubService
         _pnSubscribeCallbackListener.onStatus += OnPnStatus;
         _pnSubscribeCallbackListener.onSignal += OnPnSignal;
         _pnSubscribeCallbackListener.onMessage += OnPnMessage;
-        /*pnSubscribeCallbackListener.onMessage += OnPnMessage;
-        pnSubscribeCallbackListener.onPresence += OnPnPresence;
-        pnSubscribeCallbackListener.onFile += OnPnFile;
-        pnSubscribeCallbackListener.onObject += OnPnObject;
-        pnSubscribeCallbackListener.onMessageAction += OnPnMessageAction;*/
+    }
+
+    private string GetUuid()
+    {
+        return Guid.NewGuid().ToString();
     }
 
     public void Subscribe(List<string> channels)
@@ -104,24 +106,22 @@ public class PubnubService
 
     private void OnPnStatus(Pubnub pubnub, PNStatus pnStatus)
     {
-        Debug.Log($"[PUBNUB] OnPnStatus: {pnStatus.Category}");
+        if (pnStatus.Error)
+            Debug.LogError($"[PUBNUB] OnPnStatus: {pnStatus.ErrorData.Information}");
+        else
+        {
+            if (pnStatus.Category == PNStatusCategory.PNConnectedCategory)
+            {
+                Debug.Log($"[PUBNUB] OnPnStatus: {pnStatus.Uuid} connected to {string.Join("|", pnStatus.AffectedChannels)} channel(s)");
+            }
+            OnStatusCallback?.Invoke(pnStatus.Category);
+        }
     }
 
     private void OnPnSignal(Pubnub pubnub, PNSignalResult<object> signalResult)
     {
         if (signalResult.Publisher == _pnConfiguration.UserId) return;
-        Debug.Log($"[PUBNUB] OnPnSignal: {signalResult.Message}");
         OnSignalCallback?.Invoke(signalResult);
-    }
-
-    public void AddReceivedSignal(Action<PNSignalResult<object>> callback)
-    {
-        OnSignalCallback += callback;
-    }
-
-    public void RemoveSignalCallback(Action<PNSignalResult<object>> callback)
-    {
-        OnSignalCallback -= callback;
     }
 
     private void OnPnMessage(Pubnub pubnub, PNMessageResult<object> messageResult)
@@ -134,9 +134,14 @@ public class PubnubService
         Pubnub.CleanUp();
     }
 
+    public List<string> GetChannels()
+    {
+        return _pubnub.GetSubscribedChannels();
+    }
 
     public void ClearAll()
     {
+        _pubnub.Disconnect<string>();
         _pubnub.UnsubscribeAll<string>();
         _pubnub.UnsubscribeAll<object>();
         _pnSubscribeCallbackListener.onStatus -= OnPnStatus;
