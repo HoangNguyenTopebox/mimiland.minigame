@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class PubnubBehavior : MonoBehaviour
 {
-    private string _channelName = "Test";
+    private string _channelName = "w-1";
+    private string _chatChannel = "g-1";
 
     private void Awake()
     {
@@ -17,8 +18,19 @@ public class PubnubBehavior : MonoBehaviour
     [ContextMenu("Send Publish")]
     public void SendPublish()
     {
-        PubnubService.Instance.Publish(_channelName, SignalTypeToString(PNSignalType.SendJoinWorld),
+        PubnubService.Instance.Publish(_chatChannel, SignalTypeToString(PNSignalType.SendJoinWorld),
             new PNPublishResultExt(OnPublish));
+    }
+
+    [ContextMenu("Fetch History")]
+    public void FetchHistory()
+    {
+        PubnubService.Instance.FetchHistory(_chatChannel, 10, new PNFetchHistoryResultExt(OnFetchHistory));
+    }
+
+    private void OnFetchHistory(PNFetchHistoryResult fetchHistoryResult, PNStatus status)
+    {
+        Debug.Log($"[PUBNUB] OnFetchHistory: {fetchHistoryResult}");
     }
 
     [ContextMenu("Send Signal")]
@@ -30,7 +42,14 @@ public class PubnubBehavior : MonoBehaviour
 
     private void OnPublish(PNPublishResult result, PNStatus status)
     {
-        Debug.Log($"[PUBNUB] OnPublish: {result}");
+        if (status.Error)
+        {
+            Debug.LogError($"[PUBNUB] OnPublish: {status.ErrorData.Information}");
+        }
+        else
+        {
+            //Debug.Log($"[PUBNUB] OnPublish: {result}");
+        }
     }
 
     private void OnSignal(PNPublishResult result, PNStatus status)

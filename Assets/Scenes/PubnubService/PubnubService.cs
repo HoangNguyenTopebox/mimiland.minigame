@@ -90,6 +90,11 @@ public class PubnubService
             .Message(message)
             .Execute(callback);
     }
+    
+    public void FetchHistory(string chatChannel, int i, PNCallback<PNFetchHistoryResult> callback)
+    {
+        _pubnub.FetchHistory().Channels(new List<string> { chatChannel }).MaximumPerChannel(i).Execute(callback);
+    }
 
     private void OnPnStatus(Pubnub pubnub, PNStatus pnStatus)
     {
@@ -118,6 +123,11 @@ public class PubnubService
         Debug.Log($"[PUBNUB] OnPnMessage: {messageResult.Message}");
     }
 
+    public void ClearUp()
+    {
+        Pubnub.CleanUp();
+    }
+
 
     public void ClearAll()
     {
@@ -125,6 +135,7 @@ public class PubnubService
         _pubnub.UnsubscribeAll<object>();
         _pnSubscribeCallbackListener.onStatus -= OnPnStatus;
         _pnSubscribeCallbackListener.onSignal -= OnPnSignal;
+        _pnSubscribeCallbackListener.onMessage -= OnPnMessage;
         OnSignalCallback = null;
     }
 }
