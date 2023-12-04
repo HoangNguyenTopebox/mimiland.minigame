@@ -103,6 +103,9 @@ public class PubnubBehavior : MonoBehaviour
             case PNSignal.SendJoinWorld:
                 Debug.Log($"[PUBNUB] OnReceivedSignal: {PrintSignalResult(result)}");
                 break;
+            case PNSignal.SendCreateLobby:
+                Debug.Log($"[PUBNUB] OnReceivedSignal: {PrintSignalResult(result)}");
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -121,7 +124,6 @@ public class PubnubBehavior : MonoBehaviour
         }
         else if (status == PNStatusCategory.PNDisconnectedCategory)
         {
-            
         }
         else if (status == PNStatusCategory.PNReconnectedCategory)
         {
@@ -171,6 +173,10 @@ public class PubnubBehavior : MonoBehaviour
         {
             case PNSignalType.SendJoinWorld:
                 return PNSignal.SendJoinWorld;
+            case PNSignalType.SendCreateLobby:
+                return PNSignal.SendCreateLobby;
+            case PNSignalType.SendJoinLobby:
+                return PNSignal.SendJoinLobby;
             default:
                 throw new ArgumentOutOfRangeException(nameof(type), type, null);
         }
@@ -193,11 +199,6 @@ public class PubnubBehavior : MonoBehaviour
         if (GUI.Button(new Rect(200, 130, 100, 50), "Leave Channel"))
         {
             LeaveChannel();
-        }
-
-        if (GUI.Button(new Rect(10, 10, 100, 50), "Send Message"))
-        {
-            SendMessage();
         }
 
         _message = GUI.TextField(new Rect(200, 10, 200, 50), _message);
@@ -250,9 +251,13 @@ public class PubnubBehavior : MonoBehaviour
 public static class PNSignal
 {
     public const string SendJoinWorld = "W-1";
+    public const string SendCreateLobby = "C-1";
+    public const string SendJoinLobby = "J-1";
 }
 
 public enum PNSignalType
 {
     SendJoinWorld,
+    SendCreateLobby,
+    SendJoinLobby,
 }
