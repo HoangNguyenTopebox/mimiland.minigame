@@ -70,15 +70,17 @@ public class PubnubService
         }
     }
 
-    public void Subscribe(List<string> channels)
+    public void Subscribe(string[] channels)
     {
+        // different using List or Array from Subscribe, may be not working
         _pubnub.Subscribe<string>()
             .Channels(channels)
             .Execute();
     }
 
-    public void Unsubscribe(List<string> channels)
+    public void Unsubscribe(string[] channels)
     {
+        // different using List or Array from Unsubscribe, may be not working
         _pubnub.Unsubscribe<string>()
             .Channels(channels)
             .Execute();
@@ -154,6 +156,18 @@ public class PubnubService
         Pubnub.CleanUp();
     }
 
+    public void Reconnect()
+    {
+        _pubnub.Reconnect<string>();
+    }
+
+    public void Disconnect()
+    {
+        _pubnub.Disconnect<string>();
+        _pubnub.UnsubscribeAll<string>();
+        _pubnub.UnsubscribeAll<object>();
+    }
+
     public List<string> GetChannels()
     {
         return _pubnub.GetSubscribedChannels();
@@ -161,12 +175,12 @@ public class PubnubService
 
     public void ClearAll()
     {
-        _pubnub.Disconnect<string>();
-        _pubnub.UnsubscribeAll<string>();
-        _pubnub.UnsubscribeAll<object>();
+        Disconnect();
         _pnSubscribeCallbackListener.onStatus -= OnPnStatus;
         _pnSubscribeCallbackListener.onSignal -= OnPnSignal;
         _pnSubscribeCallbackListener.onMessage -= OnPnMessage;
         OnSignalCallback = null;
+        OnMessageCallback = null;
+        OnStatusCallback = null;
     }
 }

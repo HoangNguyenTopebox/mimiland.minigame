@@ -9,9 +9,9 @@ public class PubnubBehavior : MonoBehaviour
     private string _chatChannel = "g-1";
     private PubnubService _pubnubService;
 
-    private List<string> Channels
+    private string[] Channels
     {
-        get => new List<string>
+        get => new string[]
         {
             _worldChannel,
             _chatChannel,
@@ -24,18 +24,25 @@ public class PubnubBehavior : MonoBehaviour
 
         _pubnubService = PubnubService.Instance;
 
-        _pubnubService.Subscribe(Channels);
+        //_pubnubService.Subscribe(Channels);
         _pubnubService.OnSignalCallback += OnReceivedSignal;
         _pubnubService.OnStatusCallback += OnStatusCallback;
         _pubnubService.OnMessageCallback += OnMessageCallback;
     }
 
-    private void Start()
+    #region Methods
+
+    public void JoinChannel(string[] channels = null)
     {
-        FetchHistory();
+        channels ??= Channels;
+        _pubnubService.Subscribe(channels);
     }
 
-    #region Methods
+    public void LeaveChannel(string[] channels = null)
+    {
+        channels ??= Channels;
+        _pubnubService.Unsubscribe(channels);
+    }
 
     private string _message = "Hello World";
     private Queue<string> _messages = new Queue<string>();
@@ -56,6 +63,16 @@ public class PubnubBehavior : MonoBehaviour
     public void FetchHistory()
     {
         _pubnubService.FetchHistory(_chatChannel, 10, new PNFetchHistoryResultExt(OnFetchHistory));
+    }
+
+    public void Disconnect()
+    {
+        _pubnubService.Disconnect();
+    }
+
+    public void Reconnect()
+    {
+        _pubnubService.Reconnect();
     }
 
     #endregion
@@ -100,12 +117,22 @@ public class PubnubBehavior : MonoBehaviour
     {
         if (status == PNStatusCategory.PNConnectedCategory)
         {
-            Debug.Log($"[PUBNUB] OnStatusCallback: {status}");
+            FetchHistory();
         }
         else if (status == PNStatusCategory.PNDisconnectedCategory)
         {
-            Debug.Log($"[PUBNUB] OnStatusCallback: {status}");
+            
         }
+        else if (status == PNStatusCategory.PNReconnectedCategory)
+        {
+        }
+        else if (status == PNStatusCategory.PNUnexpectedDisconnectCategory)
+        {
+            //_pubnubService.ClearAll();
+            Debug.LogWarning("[PUBNUB] Unexpected Disconnect Try Again");
+        }
+
+        //Debug.Log($"[PUBNUB] OnStatusCallback: {status}");
     }
 
     private void OnFetchHistory(PNFetchHistoryResult fetchHistoryResult, PNStatus status)
@@ -152,7 +179,22 @@ public class PubnubBehavior : MonoBehaviour
 
     private void OnGUI()
     {
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
+        if (GUI.Button(new Rect(10, 10, 100, 50), "Send Message"))
+        {
+            SendMessage();
+        }
+
+        if (GUI.Button(new Rect(200, 70, 100, 50), "Join Channel"))
+        {
+            JoinChannel();
+        }
+
+        if (GUI.Button(new Rect(200, 130, 100, 50), "Leave Channel"))
+        {
+            LeaveChannel();
+        }
+
         if (GUI.Button(new Rect(10, 10, 100, 50), "Send Message"))
         {
             SendMessage();
@@ -172,16 +214,26 @@ public class PubnubBehavior : MonoBehaviour
             FetchHistory();
         }
 
+        if (GUI.Button(new Rect(10, 190, 100, 50), "Disconnect"))
+        {
+            Disconnect();
+        }
+
+        if (GUI.Button(new Rect(10, 250, 100, 50), "Reconnect"))
+        {
+            Reconnect();
+        }
+
         GUIText(PubnubService.Instance.GetUuid());
-#endif
+//#endif
     }
 
 
     private void GUIText(string text)
     {
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
         GUI.Label(new Rect(Screen.width / 2, 10, 1000, 50), text);
-#endif
+//#endif
     }
 
     private void OnDestroy()
