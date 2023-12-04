@@ -16,7 +16,7 @@ public class SpyFakePlayer : MonoBehaviour
     {
         isSpy = FakeRole();
         keyword = GetKeyword(isSpy);
-        Debug.Log(gameObject.name+"keyword is "+keyword+"=>"+isSpy);
+        Debug.Log(gameObject.name+" keyword is "+keyword+"=>"+isSpy);
 
     }
     private string GetKeyword(bool _isSpy)

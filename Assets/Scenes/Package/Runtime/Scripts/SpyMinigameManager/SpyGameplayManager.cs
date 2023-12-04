@@ -47,10 +47,11 @@ public class SpyGameplayManager : MonoBehaviour
                 break;
             case GamestateEnum.PREPARE:
                 Debug.Log("prepare state");
-                timeTillNextState= timeTillNextState.AddSeconds(60f);
+                timeTillNextState= timeTillNextState.AddSeconds(5f);
                 StartCoroutine(preparation.Initialize(timeTillNextState));                
                 break;
             case GamestateEnum.CONVERSATION:
+                OnUpdateState(GamestateEnum.WAIT_FOR_INPUT);
                 Debug.Log("conversation state");
                 break;
             case GamestateEnum.WAIT_FOR_INPUT:
