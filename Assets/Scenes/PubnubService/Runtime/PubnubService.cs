@@ -19,6 +19,7 @@ public class PubnubService
     }
 
     public event Action<PNSignalResult<object>> OnSignalCallback;
+    public event Action<PNMessageResult<object>> OnMessageCallback;
     public event Action<PNStatusCategory> OnStatusCallback;
 
     private Pubnub _pubnub;
@@ -28,6 +29,7 @@ public class PubnubService
     private const string PublishKey = "pub-c-a221cc05-1cba-44cf-837d-9e684a6bb244";
     private const string SubscribeKey = "sub-c-719c2465-e21a-44f9-856d-3f3b9eb88e44";
     private const string SecretKey = "sec-c-MDIzN2Y2ZjktODg3Ny00MGZlLTk2YjYtMzJmY2JjNTFmNzhm";
+    private const string PubnubUuidKey = "PUBNUB_UUID";
 
     private void Initialize()
     {
@@ -57,9 +59,15 @@ public class PubnubService
         _pnSubscribeCallbackListener.onMessage += OnPnMessage;
     }
 
-    private string GetUuid()
+    public string GetUuid()
     {
-        return Guid.NewGuid().ToString();
+        if (PlayerPrefs.GetString(PubnubUuidKey) != "")
+            return PlayerPrefs.GetString(PubnubUuidKey);
+        else
+        {
+            PlayerPrefs.SetString(PubnubUuidKey, Guid.NewGuid().ToString());
+            return PlayerPrefs.GetString(PubnubUuidKey);
+        }
     }
 
     public void Subscribe(List<string> channels)
@@ -76,7 +84,7 @@ public class PubnubService
             .Execute();
     }
 
-    public void Publish(string channel, string message, PNCallback<PNPublishResult> callback = null)
+    public void SendMessage(string channel, string message, PNCallback<PNPublishResult> callback = null)
     {
         if (callback == null)
             _pubnub.Publish()
@@ -91,17 +99,26 @@ public class PubnubService
     }
 
     //send signal
-    public void SendSignal(string channel, string message, PNCallback<PNPublishResult> callback)
+    public void SendSignal(string channel, string message, Dictionary<string, object> param = null,
+        PNCallback<PNPublishResult> callback = null)
     {
         _pubnub.Signal()
             .Channel(channel)
             .Message(message)
+            .QueryParam(param)
             .Execute(callback);
     }
 
-    public void FetchHistory(string chatChannel, int i, PNCallback<PNFetchHistoryResult> callback)
+    public void FetchHistory(string chatChannel, int maxPerChannel, PNCallback<PNFetchHistoryResult> callback)
     {
-        _pubnub.FetchHistory().Channels(new List<string> { chatChannel }).MaximumPerChannel(i).Execute(callback);
+        _pubnub.FetchHistory().Channels(new List<string> { chatChannel }).MaximumPerChannel(maxPerChannel)
+            .Execute(callback);
+    }
+
+    public async void FetchHistoryAsync(string chatChannel, int maxPerChannel)
+    {
+        await _pubnub.FetchHistory().Channels(new List<string> { chatChannel }).MaximumPerChannel(maxPerChannel)
+            .ExecuteAsync();
     }
 
     private void OnPnStatus(Pubnub pubnub, PNStatus pnStatus)
@@ -112,8 +129,10 @@ public class PubnubService
         {
             if (pnStatus.Category == PNStatusCategory.PNConnectedCategory)
             {
-                Debug.Log($"[PUBNUB] OnPnStatus: {pnStatus.Uuid} connected to {string.Join("|", pnStatus.AffectedChannels)} channel(s)");
+                Debug.Log(
+                    $"[PUBNUB] OnPnStatus: {pnStatus.Uuid} connected to {string.Join("|", pnStatus.AffectedChannels)} channel(s)");
             }
+
             OnStatusCallback?.Invoke(pnStatus.Category);
         }
     }
@@ -126,7 +145,8 @@ public class PubnubService
 
     private void OnPnMessage(Pubnub pubnub, PNMessageResult<object> messageResult)
     {
-        Debug.Log($"[PUBNUB] OnPnMessage: {messageResult.Message}");
+        OnMessageCallback?.Invoke(messageResult);
+        //Debug.Log($"[PUBNUB] OnPnMessage: {messageResult.Message}");
     }
 
     public void ClearUp()
