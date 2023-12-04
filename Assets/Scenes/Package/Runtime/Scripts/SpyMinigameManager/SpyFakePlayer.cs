@@ -34,7 +34,7 @@ public class SpyFakePlayer : MonoBehaviour
 
     private bool FakeRole()
     {
-        return Random.Range(0,1)==0?true:false;
+        return Random.Range(0,2)==0?true:false;
     }
     void Update()
     {
